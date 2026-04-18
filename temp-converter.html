@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>محوّل درجات الحرارة</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;700;900&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#03060f;--surface:#080d1a;--card:#0d1426;--border:#1a2440;
+  --hot:#ef4444;--warm:#f97316;--mild:#f59e0b;--cool:#3b82f6;--cold:#06b6d4;--freeze:#8b5cf6;
+  --text:#f0f4ff;--muted:#4a5a80;
+}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-x:hidden}
+
+/* ANIMATED BG */
+body::before{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse at 30% 30%, rgba(239,68,68,.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 70%, rgba(59,130,246,.08) 0%, transparent 50%);
+  pointer-events:none;z-index:0;
+  animation:bgPulse 6s ease-in-out infinite alternate;
+}
+@keyframes bgPulse{
+  from{background:radial-gradient(ellipse at 30% 30%,rgba(239,68,68,.08),transparent 50%),radial-gradient(ellipse at 70% 70%,rgba(59,130,246,.08),transparent 50%)}
+  to{background:radial-gradient(ellipse at 60% 20%,rgba(239,68,68,.12),transparent 50%),radial-gradient(ellipse at 40% 80%,rgba(59,130,246,.12),transparent 50%)}
+}
+
+/* HEADER */
+header{text-align:center;padding:48px 20px 20px;position:relative;z-index:1}
+.header-icon{font-size:3.5rem;margin-bottom:12px;display:block;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+h1{font-family:'Tajawal',sans-serif;font-size:2.2rem;font-weight:900;margin-bottom:6px}
+h1 span{color:var(--hot)}
+.subtitle{font-size:.85rem;color:var(--muted)}
+
+/* MAIN CARD */
+.converter-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:24px;
+  padding:36px;
+  width:100%;max-width:520px;
+  margin:20px 20px 0;
+  position:relative;z-index:1;
+  box-shadow:0 40px 80px rgba(0,0,0,.5);
+}
+
+/* INPUTS */
+.dual-input{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:end;margin-bottom:28px}
+.input-group{display:flex;flex-direction:column;gap:8px}
+.input-label{font-size:.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+.temp-input-wrap{position:relative}
+.temp-input{
+  width:100%;background:var(--surface);border:2px solid var(--border);
+  border-radius:14px;color:var(--text);font-family:'Tajawal',sans-serif;
+  font-size:2rem;font-weight:900;padding:16px 48px 16px 16px;
+  outline:none;transition:border-color .3s;text-align:center;
+}
+.temp-input:focus{border-color:var(--hot)}
+.temp-unit{
+  position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  font-size:1.1rem;font-weight:700;color:var(--muted);pointer-events:none;
+}
+
+/* SWAP BTN */
+.swap-btn{
+  width:48px;height:48px;border-radius:50%;border:2px solid var(--border);
+  background:var(--surface);color:var(--text);font-size:1.2rem;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .3s;align-self:center;margin-bottom:2px;flex-shrink:0;
+}
+.swap-btn:hover{border-color:var(--hot);background:rgba(239,68,68,.1);transform:rotate(180deg)}
+
+/* RESULT DISPLAY */
+.result-banner{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:20px 24px;text-align:center;
+  margin-bottom:24px;transition:all .4s;
+}
+.result-label{font-size:.72rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.result-val{font-family:'Tajawal',sans-serif;font-size:2.8rem;font-weight:900;line-height:1;transition:all .3s}
+.result-formula{font-size:.72rem;color:var(--muted);margin-top:8px;font-style:italic}
+
+/* THERMOMETER */
+.thermo-wrap{display:flex;justify-content:center;margin-bottom:24px;gap:30px}
+.thermo{display:flex;flex-direction:column;align-items:center;gap:8px}
+.thermo-label{font-size:.68rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.thermo-visual{
+  width:28px;height:120px;background:var(--surface);border-radius:14px;
+  border:2px solid var(--border);position:relative;overflow:hidden;
+}
+.thermo-fill{
+  position:absolute;bottom:0;left:0;right:0;
+  border-radius:0 0 12px 12px;
+  transition:height .6s cubic-bezier(.4,0,.2,1),background .4s;
+}
+.thermo-bulb{
+  width:28px;height:28px;border-radius:50%;margin-top:4px;
+  border:2px solid var(--border);transition:background .4s;
+}
+
+/* WEATHER CONTEXT */
+.weather-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;
+  transition:all .4s;
+}
+.weather-emoji{font-size:2.2rem;flex-shrink:0}
+.weather-info{}
+.weather-title{font-size:.9rem;font-weight:700;margin-bottom:2px}
+.weather-desc{font-size:.75rem;color:var(--muted);line-height:1.5}
+
+/* QUICK REFS */
+.quick-title{font-size:.68rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px}
+.quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.quick-item{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:10px;text-align:center;cursor:pointer;
+  transition:all .2s;
+}
+.quick-item:hover{border-color:var(--hot);transform:translateY(-2px)}
+.quick-temp{font-family:'Tajawal',sans-serif;font-size:1rem;font-weight:900}
+.quick-label{font-size:.65rem;color:var(--muted);margin-top:2px}
+.quick-emoji{font-size:1.1rem;margin-bottom:2px}
+
+/* HISTORY */
+.history-wrap{margin-top:24px;border-top:1px solid var(--border);padding-top:20px}
+.history-list{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto}
+.history-list::-webkit-scrollbar{width:3px}
+.history-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.hist-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color .2s}
+.hist-item:hover{border-color:var(--hot)}
+.hist-from{font-family:'Tajawal',sans-serif;font-size:.85rem;font-weight:700}
+.hist-arrow{color:var(--muted);font-size:.8rem;padding:0 8px}
+.hist-to{font-family:'Tajawal',sans-serif;font-size:.85rem;font-weight:700;color:var(--cool)}
+.clear-hist{background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);padding:5px 12px;font-size:.72rem;font-family:'Cairo',sans-serif;cursor:pointer;margin-top:10px;transition:all .2s}
+.clear-hist:hover{border-color:var(--hot);color:var(--hot)}
+
+/* MODE TOGGLE */
+.mode-bar{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:24px}
+.mode-btn{flex:1;padding:7px;border-radius:7px;border:none;background:transparent;color:var(--muted);font-family:'Cairo',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s}
+.mode-btn.active{background:var(--hot);color:#fff}
+
+@media(max-width:480px){
+  .dual-input{grid-template-columns:1fr;gap:10px}
+  .swap-btn{transform:rotate(90deg);margin:0 auto}
+  .quick-grid{grid-template-columns:repeat(2,1fr)}
+  .converter-card{padding:24px 16px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="header-icon" id="main-icon">🌡️</span>
+  <h1>محوّل <span>الحرارة</span></h1>
+  <p class="subtitle">تحويل درجات الحرارة بين سيلسيوس وفهرنهايت</p>
+</header>
+
+<div class="converter-card">
+
+  <!-- MODE -->
+  <div class="mode-bar">
+    <button class="mode-btn active" id="btn-cf" onclick="setMode('cf')">°C ← → °F</button>
+    <button class="mode-btn" id="btn-fc" onclick="setMode('fc')">°F ← → °C</button>
+  </div>
+
+  <!-- INPUTS -->
+  <div class="dual-input">
+    <div class="input-group">
+      <div class="input-label" id="from-label" style="color:var(--hot)">🌡 سيلسيوس °C</div>
+      <div class="temp-input-wrap">
+        <input class="temp-input" id="from-input" type="number" placeholder="0" oninput="convert()"/>
+        <span class="temp-unit" id="from-unit">°C</span>
+      </div>
+    </div>
+    <button class="swap-btn" onclick="swapMode()" title="تبديل">⇄</button>
+    <div class="input-group">
+      <div class="input-label" id="to-label" style="color:var(--cool)">🧊 فهرنهايت °F</div>
+      <div class="temp-input-wrap">
+        <input class="temp-input" id="to-input" type="number" placeholder="32" oninput="convertReverse()"/>
+        <span class="temp-unit" id="to-unit">°F</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-banner" id="result-banner">
+    <div class="result-label">النتيجة</div>
+    <div class="result-val" id="result-val" style="color:var(--cool)">32.00 °F</div>
+    <div class="result-formula" id="result-formula">(0 × 9/5) + 32 = 32</div>
+  </div>
+
+  <!-- THERMOMETERS -->
+  <div class="thermo-wrap">
+    <div class="thermo">
+      <div class="thermo-label">°C</div>
+      <div class="thermo-visual"><div class="thermo-fill" id="thermo-c"></div></div>
+      <div class="thermo-bulb" id="bulb-c"></div>
+    </div>
+    <div class="thermo">
+      <div class="thermo-label">°F</div>
+      <div class="thermo-visual"><div class="thermo-fill" id="thermo-f"></div></div>
+      <div class="thermo-bulb" id="bulb-f"></div>
+    </div>
+  </div>
+
+  <!-- WEATHER CONTEXT -->
+  <div class="weather-card" id="weather-card">
+    <div class="weather-emoji" id="w-emoji">🌡️</div>
+    <div class="weather-info">
+      <div class="weather-title" id="w-title">أدخل درجة حرارة</div>
+      <div class="weather-desc" id="w-desc">سيظهر هنا وصف الطقس والملابس المناسبة</div>
+    </div>
+  </div>
+
+  <!-- QUICK REFS -->
+  <div class="quick-title">مراجع سريعة — انقر للتحويل</div>
+  <div class="quick-grid">
+    <div class="quick-item" onclick="quickSet(0)"><div class="quick-emoji">🧊</div><div class="quick-temp" style="color:var(--freeze)">0°C</div><div class="quick-label">نقطة التجمد</div></div>
+    <div class="quick-item" onclick="quickSet(20)"><div class="quick-emoji">😊</div><div class="quick-temp" style="color:var(--cool)">20°C</div><div class="quick-label">معتدل ممتاز</div></div>
+    <div class="quick-item" onclick="quickSet(37)"><div class="quick-emoji">🤒</div><div class="quick-temp" style="color:var(--warm)">37°C</div><div class="quick-label">حرارة الجسم</div></div>
+    <div class="quick-item" onclick="quickSet(100)"><div class="quick-emoji">♨️</div><div class="quick-temp" style="color:var(--hot)">100°C</div><div class="quick-label">نقطة الغليان</div></div>
+    <div class="quick-item" onclick="quickSet(-40)"><div class="quick-emoji">🥶</div><div class="quick-temp" style="color:var(--freeze)">-40°C</div><div class="quick-label">−40 = −40°F</div></div>
+    <div class="quick-item" onclick="quickSet(45)"><div class="quick-emoji">🔥</div><div class="quick-temp" style="color:var(--hot)">45°C</div><div class="quick-label">صيف القاهرة!</div></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="history-wrap">
+    <div class="quick-title">آخر التحويلات</div>
+    <div class="history-list" id="history-list"><div style="color:var(--muted);font-size:.78rem;text-align:center;padding:10px">لا يوجد تحويلات بعد</div></div>
+    <button class="clear-hist" onclick="clearHistory()">مسح السجل</button>
+  </div>
+
+</div>
+
+<script>
+let mode = 'cf'; // cf = celsius to fahrenheit
+let history = JSON.parse(localStorage.getItem('tempHistory') || '[]');
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('btn-cf').classList.toggle('active', m==='cf');
+  document.getElementById('btn-fc').classList.toggle('active', m==='fc');
+  if(m==='cf') {
+    document.getElementById('from-label').innerHTML='🌡 سيلسيوس °C';
+    document.getElementById('from-label').style.color='var(--hot)';
+    document.getElementById('to-label').innerHTML='🧊 فهرنهايت °F';
+    document.getElementById('to-label').style.color='var(--cool)';
+    document.getElementById('from-unit').textContent='°C';
+    document.getElementById('to-unit').textContent='°F';
+  } else {
+    document.getElementById('from-label').innerHTML='🧊 فهرنهايت °F';
+    document.getElementById('from-label').style.color='var(--cool)';
+    document.getElementById('to-label').innerHTML='🌡 سيلسيوس °C';
+    document.getElementById('to-label').style.color='var(--hot)';
+    document.getElementById('from-unit').textContent='°F';
+    document.getElementById('to-unit').textContent='°C';
+  }
+  document.getElementById('from-input').value='';
+  document.getElementById('to-input').value='';
+  updateResult(0, 32);
+}
+
+function swapMode() { setMode(mode==='cf'?'fc':'cf'); }
+
+function cToF(c) { return (c * 9/5) + 32; }
+function fToC(f) { return (f - 32) * 5/9; }
+
+function getWeather(c) {
+  if(c <= -20) return {emoji:'❄️', title:'برد قارس جداً', desc:'ابق في البيت! درجات خطرة على الصحة، الصقيع فوري.', color:'#8b5cf6'};
+  if(c <= 0)   return {emoji:'🥶', title:'تجمد', desc:'الماء يتجمد. لبس ثقيل جداً وقفازات ضرورية.', color:'#06b6d4'};
+  if(c <= 10)  return {emoji:'🧥', title:'بارد', desc:'ارتدِ معطفاً ثقيلاً. الطقس يحتاج ملابس شتوية.', color:'#3b82f6'};
+  if(c <= 18)  return {emoji:'🌥️', title:'معتدل بارد', desc:'جاكيت خفيف كافي. طقس جيد للتنزه.', color:'#60a5fa'};
+  if(c <= 25)  return {emoji:'😊', title:'معتدل ممتاز', desc:'الطقس مثالي! ملابس عادية مريحة تكفي.', color:'#22c55e'};
+  if(c <= 32)  return {emoji:'☀️', title:'دافئ', desc:'ملابس خفيفة. شرب الماء مهم.', color:'#f59e0b'};
+  if(c <= 40)  return {emoji:'🌡️', title:'حار', desc:'حار جداً، تجنب الشمس. ملابس قطنية فاتحة.', color:'#f97316'};
+  if(c <= 45)  return {emoji:'🔥', title:'حار جداً', desc:'صيف مصر الحقيقي! قلل الحركة واشرب ماء كتير.', color:'#ef4444'};
+  return {emoji:'💀', title:'خطر شديد', desc:'درجة حرارة خطيرة جداً على الجسم.', color:'#dc2626'};
+}
+
+function getThermoHeight(c) {
+  // -50 to 120 mapped to 0-100%
+  const pct = Math.max(0, Math.min(100, ((c+50)/170)*100));
+  return pct;
+}
+
+function getThermoColor(c) {
+  if(c <= 0) return '#8b5cf6';
+  if(c <= 15) return '#06b6d4';
+  if(c <= 25) return '#22c55e';
+  if(c <= 35) return '#f59e0b';
+  if(c <= 45) return '#f97316';
+  return '#ef4444';
+}
+
+function updateResult(c, f) {
+  const col = getThermoColor(c);
+  const w = getWeather(c);
+  const h = getThermoHeight(c);
+
+  // Result
+  if(mode==='cf') {
+    document.getElementById('result-val').textContent = f.toFixed(2) + ' °F';
+    document.getElementById('result-formula').textContent = `(${c} × 9/5) + 32 = ${f.toFixed(2)}`;
+  } else {
+    document.getElementById('result-val').textContent = c.toFixed(2) + ' °C';
+    document.getElementById('result-formula').textContent = `(${f} − 32) × 5/9 = ${c.toFixed(2)}`;
+  }
+  document.getElementById('result-val').style.color = col;
+
+  // Thermometers
+  document.getElementById('thermo-c').style.height = h+'%';
+  document.getElementById('thermo-c').style.background = col;
+  document.getElementById('thermo-f').style.height = h+'%';
+  document.getElementById('thermo-f').style.background = col;
+  document.getElementById('bulb-c').style.background = col;
+  document.getElementById('bulb-f').style.background = col;
+
+  // Weather
+  document.getElementById('w-emoji').textContent = w.emoji;
+  document.getElementById('w-title').textContent = w.title;
+  document.getElementById('w-title').style.color = w.color;
+  document.getElementById('w-desc').textContent = w.desc;
+  document.getElementById('main-icon').textContent = w.emoji;
+}
+
+function convert() {
+  const val = parseFloat(document.getElementById('from-input').value);
+  if(isNaN(val)) return;
+  let c, f;
+  if(mode==='cf') { c=val; f=cToF(val); document.getElementById('to-input').value=f.toFixed(2); }
+  else { f=val; c=fToC(val); document.getElementById('to-input').value=c.toFixed(2); }
+  updateResult(c, f);
+  addHistory(c, f);
+}
+
+function convertReverse() {
+  const val = parseFloat(document.getElementById('to-input').value);
+  if(isNaN(val)) return;
+  let c, f;
+  if(mode==='cf') { f=val; c=fToC(val); document.getElementById('from-input').value=c.toFixed(2); }
+  else { c=val; f=cToF(val); document.getElementById('from-input').value=f.toFixed(2); }
+  updateResult(c, f);
+  addHistory(c, f);
+}
+
+function quickSet(c) {
+  setMode('cf');
+  document.getElementById('from-input').value = c;
+  convert();
+}
+
+function addHistory(c, f) {
+  const entry = {c:c.toFixed(1), f:f.toFixed(1), t:Date.now()};
+  history = [entry, ...history.filter(h=>h.c!==entry.c)].slice(0,10);
+  localStorage.setItem('tempHistory', JSON.stringify(history));
+  renderHistory();
+}
+
+function clearHistory() {
+  history=[];
+  localStorage.removeItem('tempHistory');
+  renderHistory();
+}
+
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if(!history.length){ el.innerHTML='<div style="color:var(--muted);font-size:.78rem;text-align:center;padding:10px">لا يوجد تحويلات بعد</div>'; return; }
+  el.innerHTML = history.map(h=>`
+    <div class="hist-item" onclick="quickSet(${h.c})">
+      <span class="hist-from" style="color:var(--hot)">${h.c}°C</span>
+      <span class="hist-arrow">⇄</span>
+      <span class="hist-to">${h.f}°F</span>
+    </div>
+  `).join('');
+}
+
+renderHistory();
+updateResult(0,32);
+</script>
+</body>
+</html>
